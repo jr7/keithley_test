@@ -9,12 +9,6 @@ def main():
 
     print dev.query('*IDN?')
 
-    with open('output.txt', 'w') as f:
-        for i in range(100):
-            time.sleep(0.1)
-            f.write(dev.ask('READ?')+'\n')
-            f.flush()
-
 
 if __name__=='__main__':
     main()
