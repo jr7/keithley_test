@@ -34,7 +34,7 @@ def create_device():
 
 
 class MainApp(QtGui.QWidget):
-    def __init__(self, parent=None, device = None):
+    def __init__(self, parent=None):
         super(MainApp, self).__init__()
         self.__initUI__()
 
@@ -47,6 +47,8 @@ class MainApp(QtGui.QWidget):
         self.setLayout(self.hbox)
         self.setGeometry(500,500,1000,500)
 
+        self.device = create_device()
+
         self.N = 100
         self.data = deque([0]*self.N, maxlen=self.N)
 
@@ -55,12 +57,12 @@ class MainApp(QtGui.QWidget):
         self.curve = self.plot.plot(self.data)
 
         self.show()
-        self.device = device
 
     def update(self):
-        if device:
-            results = dev.ask('READ?').split('#,')
-            results = [x.split(',')[0] for x in results]
+        if self.device is not None:
+            results = self.device.ask('READ?').split(',')[0]
+            results = float(results[1:-3])
+            print results
             self.data.append(results)
         else:
             self.data.append(np.random.rand())
@@ -70,6 +72,7 @@ class MainApp(QtGui.QWidget):
 def main():
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     app = QtGui.QApplication([])
+    dev = create_device()
     m = MainApp()
     t = QtCore.QTimer()
     t.timeout.connect(m.update)
