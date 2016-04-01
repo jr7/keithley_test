@@ -6,9 +6,9 @@ import matplotlib
 import matplotlib.animation as animation
 matplotlib.use('Qt4Agg')
 
-
 from collections import deque
 import matplotlib.pyplot as plt
+
 
 def main():
     rm = visa.ResourceManager('@py')
@@ -35,21 +35,35 @@ def main():
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
 
-    N = 50
-    data = deque([0]*N, maxlen=N)
+    if True:
+        while True:
+            results = dev.ask('READ?').split('#,')
+            results = [x.split(',')[0] for x in results]
+            print results
 
-    line, = plt.plot(data, 'bo')
-    ax1.set_ylim(-1, 6)
+    else:
+        N = 50
+        data = deque([0]*N, maxlen=N)
+        line, = plt.plot(data, 'bo')
+        ax1.set_ylim(-1, 6)
+        start = time.time()
 
-    def animate(i):
-        results = dev.ask('READ?').split('#,')
-        results = [x.split(',')[0] for x in results]
-        new_data = [float((x.split('VDC')[0][1:])) for x in results]
-        data.extend(new_data)
-        line.set_ydata(data)
+        def animate(i):
+            before = time.time()
+            results = dev.ask('READ?').split('#,')
+            results = [x.split(',')[0] for x in results]
 
-    ani = animation.FuncAnimation(fig, animate, frames=20)
-    plt.show()
+            now = time.time()
+
+            new_data = [float((x.split('VDC')[0][1:])) for x in results]
+
+            print "totaltime: Dt: {} {}".format(now - start, now - before)
+
+            data.extend(new_data)
+            line.set_ydata(data)
+
+        ani = animation.FuncAnimation(fig, animate, frames=40)
+        plt.show()
 
 if __name__=='__main__':
     main()
