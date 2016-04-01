@@ -14,7 +14,8 @@ def main():
     rm = visa.ResourceManager('@py')
     device_name = rm.list_resources()[0]
 
-    dev = rm.open_resource(device_name, read_termination='\r', send_end=True, baud_rate=19200)
+    dev = rm.open_resource(device_name, read_termination='\r',
+                            send_end=True, baud_rate=19200)
 
     #print dev.query('*RST')
     dev.write("*rst; status:preset; *cls")
