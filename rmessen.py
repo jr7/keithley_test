@@ -2,6 +2,7 @@ import numpy as np
 import pyqtgraph as pg
 import os, sys
 import signal
+import time
 
 from PyQt4 import QtCore, QtGui
 from time import sleep
@@ -19,17 +20,34 @@ def create_device():
     dev.write("*rst; status:preset; *cls")
     print "Reading Device: " + dev.query('*IDN?')
 
+    """
     dev.write(":SENSE:FUNCTION 'VOLT:DC'")
     dev.write(":FORMAT:ELEMENT READ")
     dev.write(":SYSTEM:AZERO:STATE OFF")
     dev.write(":SENSE:VOLT:DC:AVERAGE:STATE OFF")
-    dev.write(":SENSE:VOLT:DC:NPLC 0.01")
+    dev.write(":SENSE:VOLT:DC:NPLC 10")
     dev.write(":SENSE:VOLT:DC:RANGE 10")
     dev.write(":SENSE:VOLT:DC:DIGITS 4")
     dev.write(":TRIGGER:COUNT 1")
     dev.write(":SAMPLE:COUNT 1")
     dev.write(":TRIGGER:DELAY 0.0")
-    dev.write(":DISP:ENABLE 0")
+    dev.write(":DISP:ENABLE 1")
+    """
+    dev.write(":SENSE:FUNCTION 'RES'")
+    dev.write(":FORMAT:ELEMENT READ")
+    dev.write(":SYSTEM:AZERO:STATE OFF")
+
+    dev.write(":SENSE:RES:AVERAGE:TCONT MOV")
+    dev.write(":SENSE:RES:NPLC 10")
+
+    dev.write(":SENSE:RES:RANGE 10000")
+    dev.write(":SENSE:RES:DIGITS 4")
+
+    dev.write(":TRIGGER:COUNT 1")
+    dev.write(":SAMPLE:COUNT 1")
+    dev.write(":TRIGGER:DELAY 0.0")
+    dev.write(":DISP:ENABLE 1")
+
     return dev
 
 
@@ -40,29 +58,42 @@ class MainApp(QtGui.QWidget):
 
     def __initUI__(self):
 
-        self.hbox = QtGui.QHBoxLayout(self)
+        self.datafile =  open(sys.argv[1], 'w')
+        self.datafile.write("#Voltage : Time : Position\n")
+        self.hbox = QtGui.QVBoxLayout(self)
         self.plot = pg.PlotWidget()
-        self.hbox.addWidget(self.plot)
 
+        self.field = QtGui.QSpinBox()
+        self.position  = 0
+        self.field.valueChanged[int].connect(self.set_position)
+
+        self.hbox.addWidget(self.field)
+        self.hbox.addWidget(self.plot)
         self.setLayout(self.hbox)
         self.setGeometry(500,500,1000,500)
 
         self.device = create_device()
-
-        self.N = 100
+        self.N = 200
         self.data = deque([0]*self.N, maxlen=self.N)
-
         self.x = np.arange(self.N)
-
         self.curve = self.plot.plot(self.data)
-
         self.show()
+
+    def set_position(self, value):
+        self.position = value
 
     def update(self):
         if self.device is not None:
+            now = time.time()
             results = self.device.ask('READ?').split(',')[0]
             results = float(results[1:-3])
-            print results
+
+            dt = time.time() - now
+            print   "Ohm: {} : Time : {} : Position : {}".format(results, time.time() -now, self.position)
+            output =  "{} \t {} \t {}".format(results, time.time() -now, self.position)
+
+            self.datafile.write(output + '\n')
+            self.datafile.flush()
             self.data.append(results)
         else:
             self.data.append(np.random.rand())
@@ -78,6 +109,7 @@ def main():
     t.timeout.connect(m.update)
     t.start(50) #QTimer takes ms
     app.exec_()
+    m.datafile.close()
 
 if __name__=='__main__':
     main()
