@@ -40,7 +40,7 @@ def create_device():
     dev.write(":SENSE:RES:AVERAGE:TCONT MOV")
     dev.write(":SENSE:RES:NPLC 10")
 
-    dev.write(":SENSE:RES:RANGE 10000")
+    dev.write(":SENSE:RES:RANGE 100000")
     dev.write(":SENSE:RES:DIGITS 4")
 
     dev.write(":TRIGGER:COUNT 1")
